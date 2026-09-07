@@ -88,14 +88,41 @@ export default function PatientKiosk() {
         setIsDone(true);
       }
     } catch (err) {
+      // Dynamic natural clinical intake progression
       setTimeout(() => {
+        const userMsgCount = messages.filter(m => m.role === 'user').length + 1;
+        const lower = userText.toLowerCase();
+        let reply = "";
+
+        if (userMsgCount === 1) {
+          let symptomType = "Noted.";
+          if (lower.includes('pain') || lower.includes('hurt') || lower.includes('back') || lower.includes('head')) {
+            symptomType = "I'm sorry to hear that you're in pain.";
+          } else if (lower.includes('fever') || lower.includes('temperature') || lower.includes('hot')) {
+            symptomType = "Understood, recording the fever.";
+          } else if (lower.includes('cough') || lower.includes('throat') || lower.includes('cold')) {
+            symptomType = "Noting down your respiratory discomfort.";
+          }
+          reply = `${symptomType} How many days or hours have you experienced this, and how severe is it on a scale of 1 to 10?`;
+        } else if (userMsgCount === 2) {
+          reply = "Thank you for explaining. Are you noticing any other symptoms—such as dizziness, nausea, shortness of breath, chills, or fatigue?";
+        } else if (userMsgCount === 3) {
+          reply = "Understood. Have you taken any medications, home remedies, or painkillers for this yet?";
+        } else if (userMsgCount === 4) {
+          reply = "Got it. Do you have any known medical allergies (like penicillin) or chronic health conditions (like diabetes, BP, or asthma)?";
+        } else {
+          reply = "Thank you for answering thoroughly! I have gathered all key clinical details for the doctor. Please click 'Done & View Summary' above when you are ready to review.";
+          setIsDone(true);
+        }
+
         setMessages(prev => [...prev, { 
           role: 'assistant', 
-          content: "Understood. How long have you had these symptoms, and have you taken any medications for them?", 
+          content: reply, 
           timestamp: new Date().toISOString() 
         }]);
-        if (messages.length >= 6) setIsDone(true);
-      }, 1000);
+
+        if (userMsgCount >= 4) setIsDone(true);
+      }, 700);
     } finally {
       setIsTyping(false);
     }

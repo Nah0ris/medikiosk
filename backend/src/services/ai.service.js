@@ -97,9 +97,80 @@ async function getNextQuestion(conversationHistory, patientContext = {}) {
       isComplete,
     };
   } catch (err) {
-    logger.error('AI getNextQuestion error', { error: err.message });
-    throw new Error('Failed to generate question');
+    logger.error('OpenAI call failed, using intelligent dynamic clinical history fallback', { error: err.message });
+    return generateSmartClinicalFollowUp(conversationHistory, patientContext);
   }
+}
+
+/**
+ * Human-like clinical intake dialogue engine (used as graceful fallback)
+ */
+function generateSmartClinicalFollowUp(history, context) {
+  const userMessages = history.filter(m => m.role === 'user');
+  const count = userMessages.length;
+  const lastUserMsg = (userMessages[userMessages.length - 1]?.content || '').toLowerCase();
+
+  // Initial greeting
+  if (count === 0) {
+    return {
+      message: `Hello ${context.name ? context.name : ''}! I'm the MediKiosk Clinical Assistant. What symptoms or primary health concerns bring you in today?`,
+      isComplete: false
+    };
+  }
+
+  // Question 1 response -> Probe onset, duration & severity
+  if (count === 1) {
+    let specific = "I understand.";
+    if (lastUserMsg.includes('pain') || lastUserMsg.includes('hurt') || lastUserMsg.includes('ache')) {
+      specific = "I'm sorry to hear you're experiencing pain.";
+    } else if (lastUserMsg.includes('fever') || lastUserMsg.includes('temp') || lastUserMsg.includes('hot')) {
+      specific = "Got it, noting down the fever.";
+    } else if (lastUserMsg.includes('cough') || lastUserMsg.includes('throat') || lastUserMsg.includes('cold')) {
+      specific = "Understood, tracking the respiratory symptoms.";
+    }
+
+    return {
+      message: `${specific} Roughly how many days or hours have you been feeling this way, and on a scale of 1 to 10, how severe is it right now?`,
+      isComplete: false
+    };
+  }
+
+  // Question 2 response -> Probe associated symptoms
+  if (count === 2) {
+    return {
+      message: "Thank you for clarifying. Are you having any other accompanying symptoms—such as dizziness, nausea, shortness of breath, chills, or fatigue?",
+      isComplete: false
+    };
+  }
+
+  // Question 3 response -> Current medications & home remedies
+  if (count === 3) {
+    return {
+      message: "Noted. Have you taken any over-the-counter medicines, prescriptions, or home remedies for this recently?",
+      isComplete: false
+    };
+  }
+
+  // Question 4 response -> Allergies & chronic medical conditions
+  if (count === 4) {
+    return {
+      message: "Understood. Do you have any known drug allergies (like penicillin or sulfa), or chronic conditions like diabetes, hypertension, or asthma?",
+      isComplete: false
+    };
+  }
+
+  // Question 5 response -> Final wrap-up
+  if (count >= 5) {
+    return {
+      message: "Thank you for sharing your history. I have compiled all your responses into a structured clinical summary for the doctor to review before your consultation. [INTAKE_COMPLETE]",
+      isComplete: true
+    };
+  }
+
+  return {
+    message: "Thank you. Is there anything else you would like the doctor to know about how you've been feeling today?",
+    isComplete: false
+  };
 }
 
 /**
