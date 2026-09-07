@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: medikiosk-api
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PATIENT_APP_ORIGIN
+        sync: false
+      - key: DOCTOR_APP_ORIGIN
+        sync: false
