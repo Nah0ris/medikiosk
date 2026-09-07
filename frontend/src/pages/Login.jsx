@@ -61,6 +61,15 @@ export default function Login() {
               </>
             )}
           </button>
+
+          <div className="pt-3 border-t border-slate-100 text-center">
+            <a
+              href="/patient"
+              className="inline-flex items-center text-sm font-medium text-teal-700 hover:text-teal-900 transition-colors"
+            >
+              Open Patient Check-In Kiosk &rarr;
+            </a>
+          </div>
         </div>
       </div>
     </div>
