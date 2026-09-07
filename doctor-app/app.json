@@ -22,7 +22,7 @@
       }
     },
     "extra": {
-      "apiUrl": "http://localhost:3001/api/v1"
+      "apiUrl": "https://medikiosk-backend-0ooj.onrender.com/api/v1"
     }
   }
 }
